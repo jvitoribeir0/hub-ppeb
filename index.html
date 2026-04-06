@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área do Bolsista - PPEB</title>
+    <style>
+        /* (Seu CSS com a identidade visual do PPEB continua igual aqui) */
+        :root {
+            --ppeb-laranja: #f57017;
+            --ppeb-azul: #2d3194;
+            --ppeb-azul-escuro: #1c1f6b;
+            --texto-escuro: #333333;
+            --texto-claro: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: linear-gradient(135deg, var(--ppeb-azul) 0%, var(--ppeb-azul-escuro) 100%); height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(10px); border-radius: 16px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.5); padding: 40px 30px; width: 100%; max-width: 400px; text-align: center; }
+        .login-card h2 { color: var(--ppeb-azul-escuro); margin-bottom: 8px; font-size: 24px; }
+        .login-card p { color: #666; margin-bottom: 30px; font-size: 14px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 6px; color: var(--ppeb-azul); font-weight: 600; font-size: 13px; }
+        .input-group input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; transition: all 0.3s ease; outline: none; background-color: #fafafa; }
+        .input-group input:focus { border-color: var(--ppeb-laranja); background-color: var(--texto-claro); box-shadow: 0 0 0 3px rgba(245, 112, 23, 0.15); }
+        .btn-login { width: 100%; padding: 14px; background-color: var(--ppeb-laranja); color: var(--texto-claro); border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-top: 10px; }
+        .btn-login:hover { background-color: #e0600d; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(245, 112, 23, 0.3); }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>Área do Bolsista</h2>
+        <p>Acesse suas ferramentas e o quadro de atividades</p>
+
+        <div class="input-group">
+            <label for="email">E-mail Institucional</label>
+            <input type="email" id="email" placeholder="nome@ufpa.br">
+        </div>
+
+        <div class="input-group">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" placeholder="••••••••">
+        </div>
+
+        <button class="btn-login" id="btn-login">Entrar na Plataforma</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // Olha as suas chaves aqui:
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbvGRBaxpLJK8h4yTbFzBv9ppm-85Qexs",
+            authDomain: "hub-ppeb.firebaseapp.com",
+            projectId: "hub-ppeb",
+            storageBucket: "hub-ppeb.firebasestorage.app",
+            messagingSenderId: "185163249575",
+            appId: "1:185163249575:web:d67b6f2acfa2b5fba16882"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const btnLogin = document.getElementById('btn-login');
+        const inputEmail = document.getElementById('email');
+        const inputSenha = document.getElementById('senha');
+
+        btnLogin.addEventListener('click', () => {
+            const email = inputEmail.value;
+            const senha = inputSenha.value;
+
+            btnLogin.innerText = "Carregando...";
+            btnLogin.style.backgroundColor = "#ccc";
+
+            signInWithEmailAndPassword(auth, email, senha)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    console.log("Logado com sucesso:", user.email);
+                    window.location.href = "dashboard.html"; 
+                })
+                .catch((error) => {
+                    console.error("Erro no login:", error.message);
+                    alert("Erro ao fazer login. Verifique seu e-mail e senha.");
+                    btnLogin.innerText = "Entrar na Plataforma";
+                    btnLogin.style.backgroundColor = "var(--ppeb-laranja)";
+                });
+        });
+    </script>
+</body>
+</html>

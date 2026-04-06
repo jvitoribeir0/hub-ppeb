@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hub PPEB</title>
+    <style>
+        /* =========================================
+           1. PALETA E LAYOUT GERAL
+           ========================================= */
+        :root { --ppeb-laranja: #f57017; --ppeb-azul: #2d3194; --ppeb-azul-escuro: #1c1f6b; --fundo-app: #f4f7f6; --texto-escuro: #333333; --branco: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: var(--fundo-app); color: var(--texto-escuro); overflow-x: hidden; } 
+        
+        header { background-color: var(--ppeb-azul-escuro); color: var(--branco); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; z-index: 10; }
+        .link-perfil { color: var(--ppeb-laranja); font-weight: bold; cursor: pointer; text-decoration: underline; transition: color 0.2s; }
+        .link-perfil:hover { color: #ffd1b3; }
+        .btn-sair { background: transparent; border: 1px solid var(--ppeb-laranja); color: var(--ppeb-laranja); padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: all 0.3s; margin-left: 15px;}
+        .btn-sair:hover { background: var(--ppeb-laranja); color: var(--branco); }
+        
+        .conteudo-principal { transition: margin-right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); padding: 30px 40px; max-width: 1400px; margin-left: auto; margin-right: auto; }
+        .conteudo-principal.empurrado { margin-right: 450px; max-width: 100%; } 
+
+        /* =========================================
+           2. PAINEL SUPERIOR: CALENDÁRIO E FERRAMENTAS
+           ========================================= */
+        .dashboard-topo { display: flex; gap: 30px; margin-bottom: 40px; align-items: flex-start; }
+        
+        /* Calendário */
+        .secao-calendario { flex: 2; background: var(--branco); padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.06); border-top: 5px solid var(--ppeb-azul); }
+        .calendario-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .calendario-header h3 { color: var(--ppeb-azul-escuro); margin: 0; font-size: 22px; font-weight: 700; }
+        .btn-mes { background: #f0f4f8; color: var(--ppeb-azul); border: 1px solid #d9e2ec; padding: 6px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-mes:hover { background: var(--ppeb-azul); color: white; border-color: var(--ppeb-azul); }
+        
+        .calendario-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; margin-bottom: 25px; }
+        .dia-semana { font-size: 13px; font-weight: bold; color: #9fb3c8; text-transform: uppercase; padding-bottom: 5px; }
+        .dia-celula { background: #f8fbfd; border-radius: 10px; min-height: 85px; padding: 8px 5px; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); border: 2px solid transparent; display: flex; flex-direction: column; align-items: center; }
+        .dia-celula:hover { border-color: #bcccdc; background: #ffffff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .dia-celula.hoje { background: #fff4ed; border: 2px solid var(--ppeb-laranja); }
+        .dia-celula.vazio { background: transparent; cursor: default; }
+        .dia-celula.vazio:hover { border-color: transparent; background: transparent; transform: none; box-shadow: none; }
+        .dia-numero { font-weight: bold; font-size: 15px; color: #334e68; margin-bottom: 8px; }
+        
+        .eventos-container { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; width: 100%; }
+        .evento-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        
+        .agenda-resumo { border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        .agenda-resumo h4 { color: #627d98; font-size: 14px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .lista-resumo-eventos { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .item-resumo { background: #f0f4f8; padding: 8px 12px; border-radius: 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; color: #334e68; font-weight: 500; }
+        .item-resumo .data-badge { font-weight: 800; color: var(--ppeb-azul-escuro); font-size: 11px; background: white; padding: 2px 6px; border-radius: 4px; }
+
+        /* Nova Grade de Ferramentas */
+        .secao-ferramentas { flex: 1.2; display: flex; flex-direction: column; gap: 15px; }
+        .secao-ferramentas h3 { color: var(--ppeb-azul); margin-bottom: 5px; font-size: 20px;}
+        
+        .grid-ferramentas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        
+        .card-ferramenta { background: var(--branco); padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 4px solid var(--ppeb-laranja); text-decoration: none; color: var(--texto-escuro); transition: transform 0.2s; display: flex; flex-direction: column; justify-content: center; min-height: 90px;}
+        .card-ferramenta:hover { transform: translateY(-5px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        .card-ferramenta h4 { color: var(--ppeb-azul-escuro); margin-bottom: 5px; font-size: 14px; text-transform: uppercase; }
+        .card-ferramenta p { font-size: 11px; color: #666; margin: 0; line-height: 1.3;}
+
+        /* =========================================
+           3. QUADRO KANBAN E DEMANDAS
+           ========================================= */
+        .header-demandas { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .botoes-coordenacao { display: flex; gap: 15px; align-items: center; }
+        .btn-nova-demanda { background: var(--ppeb-azul); color: var(--branco); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-relatorio { background: #28a745; color: var(--branco); border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-relatorio:hover { background: #218838; }
+        
+        .kanban-board { display: flex; gap: 20px; align-items: flex-start; }
+        .kanban-column { background: #e9ecef; border-radius: 10px; padding: 15px; flex: 1; min-height: 400px; display: flex; flex-direction: column; }
+        .kanban-column h3 { font-size: 16px; color: var(--ppeb-azul-escuro); margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .contador { background: var(--branco); padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #666; }
+        .tarefas-lista { flex: 1; min-height: 50px; }
+        .coluna-drag-hover { background-color: #d1d5db; border: 2px dashed var(--ppeb-laranja); }
+        
+        .tarefa-card { background: var(--branco); padding: 15px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 15px; border-left: 4px solid var(--ppeb-azul); cursor: grab; transition: opacity 0.2s; position: relative; }
+        .tarefa-card:active { cursor: grabbing; }
+        .tarefa-card.urgente { border-left-color: #dc3545; }
+        .tarefa-card.bloqueada { cursor: not-allowed; opacity: 0.8; }
+        .tarefa-responsavel { display: inline-block; background: #e0e7ff; color: var(--ppeb-azul-escuro); font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; }
+        .tarefa-responsavel.aberto { background: #ffeeba; color: #856404; }
+        .tarefa-card h5 { margin-bottom: 8px; font-size: 14px; padding-right: 20px; }
+        .tarefa-card p { font-size: 12px; color: #666; margin-bottom: 10px; }
+        .tarefa-meta { display: flex; justify-content: space-between; font-size: 11px; color: #999; }
+        .btn-excluir-tarefa { position: absolute; top: 15px; right: 10px; background: none; border: none; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-excluir-tarefa:hover { transform: scale(1.2); }
+
+        /* =========================================
+           4. GAVETA LATERAL E MODAIS
+           ========================================= */
+        .gaveta-perfil { position: fixed; top: 0; right: -450px; width: 450px; height: 100vh; background-color: var(--branco); box-shadow: -5px 0 25px rgba(0,0,0,0.15); transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 1000; overflow-y: auto; display: flex; flex-direction: column; }
+        .gaveta-perfil.aberta { right: 0; }
+        .gaveta-header { background-color: var(--ppeb-azul-escuro); padding: 20px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .gaveta-header h3 { margin: 0; font-size: 18px; }
+        .btn-fechar-gaveta { background: none; border: none; color: white; font-size: 24px; cursor: pointer; transition: transform 0.2s; }
+        .btn-fechar-gaveta:hover { transform: scale(1.1); color: var(--ppeb-laranja); }
+        .gaveta-conteudo { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        .foto-container { width: 90px; height: 90px; margin: 0 auto 10px; border-radius: 50%; overflow: hidden; border: 3px solid var(--ppeb-azul); background-color: #e0e7ff; display: flex; justify-content: center; align-items: center; }
+        .foto-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .area-edicao { background: var(--fundo-app); padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; }
+        .area-edicao label { display: block; font-size: 11px; color: var(--ppeb-azul-escuro); font-weight: bold; margin-bottom: 5px; }
+        .area-edicao input { width: 100%; padding: 8px; font-size: 12px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 10px; }
+        .btn-salvar-perfil { width: 100%; padding: 8px; font-size: 13px; background: var(--ppeb-laranja); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        .secao-gaveta { border-top: 1px solid #eee; padding-top: 15px; }
+        .secao-gaveta h4 { color: var(--ppeb-azul); font-size: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-acao-gaveta { background: var(--ppeb-azul-escuro); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-acao-gaveta:hover { background: var(--ppeb-azul); }
+        .area-botoes-externos { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+        
+        .lista-pequena { list-style: none; font-size: 12px; color: #555; max-height: 100px; overflow-y: auto; background: #f9f9f9; border-radius: 6px; padding: 5px 10px; border: 1px solid #eee; }
+        .lista-pequena li { padding: 6px 0; border-bottom: 1px dashed #ddd; display: flex; justify-content: space-between; align-items: center; }
+        .lista-pequena li:last-child { border-bottom: none; }
+        .btn-excluir-item { background: none; border: none; color: #dc3545; font-size: 11px; cursor: pointer; font-weight: bold; padding: 4px 8px; border-radius: 4px; transition: 0.2s;}
+        .btn-excluir-item:hover { background: #fee2e2; }
+
+        .caixa-diario { background: #fffde7; border-left: 3px solid #fbc02d; padding: 10px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
+        .caixa-diario p { font-size: 12px; color: #333; margin-bottom: 5px; white-space: pre-wrap; padding-right: 50px; }
+        .caixa-diario .data { font-size: 10px; color: #888; }
+        .caixa-diario .botoes-acao { position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; }
+        .caixa-diario .botoes-acao button { background: none; border: none; font-size: 11px; cursor: pointer; text-decoration: underline; }
+        .caixa-diario .btn-editar { color: var(--ppeb-azul); }
+        .caixa-diario .btn-excluir { color: #dc3545; }
+
+        /* Modais */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(28, 31, 107, 0.6); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: var(--branco); padding: 30px; border-radius: 16px; width: 100%; max-width: 500px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--texto-escuro); font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-family: inherit; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn-cancelar { padding: 10px 20px; background: transparent; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; }
+        .btn-salvar { padding: 10px 20px; background: var(--ppeb-laranja); color: var(--branco); border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        .modal-iframe-content { background: var(--branco); border-radius: 12px; width: 90%; height: 90%; display: flex; flex-direction: column; padding: 20px; }
+        .modal-iframe-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-iframe-header h3 { color: var(--ppeb-azul-escuro); margin: 0; }
+        #iframe-viewer { flex: 1; border: 1px solid #ccc; border-radius: 8px; width: 100%; background: #f9f9f9; }
+
+        .lista-eventos-dia { list-style: none; margin-bottom: 20px; max-height: 200px; overflow-y: auto; }
+        .lista-eventos-dia li { background: #f9f9f9; border-left: 4px solid #ccc; padding: 10px; margin-bottom: 8px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 14px;}
+        .lista-eventos-dia li.cor-vermelho { border-left-color: #dc3545; }
+        .lista-eventos-dia li.cor-azul { border-left-color: #2d3194; }
+        .lista-eventos-dia li.cor-verde { border-left-color: #28a745; }
+        .lista-eventos-dia li.cor-laranja { border-left-color: #f57017; }
+        .lista-eventos-dia li.cor-roxo { border-left-color: #6f42c1; } 
+
+        /* =========================================
+           5. RODAPÉ DE CRÉDITOS DO DESENVOLVEDOR
+           ========================================= */
+        .footer-creditos { text-align: center; padding: 30px; color: #666; font-size: 13px; margin-top: 50px; border-top: 1px solid #ddd; background-color: var(--fundo-app); }
+        .footer-creditos b { color: var(--ppeb-azul-escuro); font-weight: 800; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><h2>Hub Acadêmico PPEB</h2></div>
+        <div class="user-info">
+            Olá, <span id="nome-usuario-header" class="link-perfil">Carregando...</span>
+            <button class="btn-sair">Sair</button>
+        </div>
+    </header>
+
+    <div class="conteudo-principal" id="main-container">
+        
+        <div class="dashboard-topo">
+            
+            <section class="secao-calendario">
+                <div class="calendario-header">
+                    <button class="btn-mes" id="btn-mes-ant">&lt; Anterior</button>
+                    <h3 id="mes-ano-display">Carregando...</h3>
+                    <button class="btn-mes" id="btn-mes-prox">Próximo &gt;</button>
+                </div>
+                
+                <div class="calendario-grid" id="calendario-dias">
+                    </div>
+
+                <div class="agenda-resumo">
+                    <h4>Próximos Eventos do Mês</h4>
+                    <ul class="lista-resumo-eventos" id="lista-resumo-eventos">
+                        </ul>
+                </div>
+            </section>
+
+            <section class="secao-ferramentas">
+                <h3>Minhas Ferramentas</h3>
+                
+                <div class="grid-ferramentas">
+                    <a href="gerador-cards-ppeb.html" class="card-ferramenta">
+                        <h4>PPEB Divulga!</h4>
+                        <p>Cards para comunicados, bancas e publicações.</p>
+                    </a>
+                    
+                    <a href="https://monitoramento-lattes-ppeb-bolsitas.streamlit.app/" target="_blank" class="card-ferramenta">
+                        <h4>Monitoramento Lattes</h4>
+                        <p>Extração automática de produtividade via PDF.</p>
+                    </a>
+
+                    <a href="gerador-docs.html" class="card-ferramenta" style="border-left-color: #28a745;">
+                        <h4 style="color: #28a745;">Docs Oficiais & Atas</h4>
+                        <p>Gerador padronizado com QR Code validador.</p>
+                    </a>
+                    
+                    <a href="criador-eventos.html" class="card-ferramenta" style="border-left-color: #e83e8c;">
+                        <h4 style="color: #e83e8c;">Criador de Eventos</h4>
+                        <p>Artes para comunicados e ações do programa.</p>
+                    </a>
+
+                    <a href="gerador-certificados.html" class="card-ferramenta" style="border-left-color: #6f42c1;">
+                        <h4 style="color: #6f42c1;">Gerador de Certificados</h4>
+                        <p>Emissão em lote via planilhas Excel ou CSV.</p>
+                    </a>
+
+                    <a href="validador.html" target="_blank" class="card-ferramenta" style="border-left-color: #17a2b8;">
+                        <h4 style="color: #17a2b8;">Portal de Autenticação</h4>
+                        <p>Verificação externa de documentos emitidos.</p>
+                    </a>
+                </div>
+            </section>
+        </div>
+
+        <section class="demandas-section">
+            <div class="header-demandas">
+                <h3 style="color: var(--ppeb-azul);">Quadro de Demandas</h3>
+                <div class="botoes-coordenacao" id="area-botoes-coordenacao">
+                    <button class="btn-relatorio" id="btn-exportar-relatorio">📄 Gerar Relatório (PDF)</button>
+                    <button class="btn-nova-demanda" id="btn-abrir-modal" style="display: none;">+ Nova Demanda</button>
+                </div>
+            </div>
+            
+            <div class="kanban-board">
+                <div class="kanban-column" id="coluna-fazer"><h3>A Fazer <span class="contador" id="cont-fazer">0</span></h3><div class="tarefas-lista" id="lista-fazer"></div></div>
+                <div class="kanban-column" id="coluna-andamento"><h3>Em Andamento <span class="contador" id="cont-andamento">0</span></h3><div class="tarefas-lista" id="lista-andamento"></div></div>
+                <div class="kanban-column" id="coluna-concluido"><h3>Concluídas <span class="contador" id="cont-concluido">0</span></h3><div class="tarefas-lista" id="lista-concluido"></div></div>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal-overlay" id="modal-evento">
+        <div class="modal-content">
+            <h3 style="color: var(--ppeb-azul-escuro); margin-bottom: 10px;" id="titulo-dia-modal">Eventos do Dia</h3>
+            <ul class="lista-eventos-dia" id="lista-eventos-modal"></ul>
+            <div id="form-novo-evento" style="border-top: 1px solid #eee; padding-top: 15px;">
+                <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--ppeb-laranja);">+ Adicionar Marcação na Agenda</h4>
+                <div class="form-group"><input type="text" id="titulo-evento" placeholder="Ex: Reunião GEFOR ou Prazo do Artigo"></div>
+                <div class="form-group">
+                    <select id="cor-evento">
+                        <option value="vermelho">Prazos CAPES/SIGAA (Vermelho)</option>
+                        <option value="verde">Defesas/Qualificação (Verde)</option>
+                        <option value="azul">Eventos PPEB (Azul)</option>
+                        <option value="laranja">Feriado/Recesso (Laranja)</option>
+                        <option value="roxo">Reuniões / Grupos (Roxo)</option>
+                    </select>
+                </div>
+                <input type="hidden" id="data-evento-oculta">
+                <div style="text-align: right;"><button class="btn-salvar" id="btn-salvar-evento" style="padding: 8px 15px;">Salvar na Agenda</button></div>
+            </div>
+            <div style="text-align: center; margin-top: 15px;"><button class="btn-cancelar" id="btn-fechar-modal-evento" style="width: 100%;">Fechar Janela</button></div>
+        </div>
+    </div>
+
+    <div class="gaveta-perfil" id="gaveta-perfil">
+        <div class="gaveta-header"><h3>Meu Portfólio</h3><button class="btn-fechar-gaveta" id="btn-fechar-gaveta">×</button></div>
+        <div class="gaveta-conteudo">
+            <div style="text-align: center;"><div class="foto-container"><img id="gaveta-imagem" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"></div>
+            <h3 id="gaveta-nome-display" style="color: var(--ppeb-azul-escuro); margin-bottom: 2px;">Bolsista</h3>
+            <p id="gaveta-email-display" style="color: #666; font-size: 12px; margin-bottom: 5px;">email@ufpa.br</p>
+            <div class="area-botoes-externos" id="area-botoes-links"></div></div>
+            <div class="area-edicao"><label>Seu Nome Completo:</label><input type="text" id="input-nome-real"><label>Link Foto Perfil:</label><input type="text" id="input-link-foto"><label>Link Lattes:</label><input type="text" id="input-link-lattes"><label>Link ORCID:</label><input type="text" id="input-link-orcid"><button class="btn-salvar-perfil" id="btn-salvar-perfil">Salvar Meus Dados</button></div>
+            <div class="secao-gaveta"><h4>Frequência <button class="btn-acao-gaveta" id="btn-registrar-plantao">Registrar Hoje</button></h4><ul class="lista-pequena" id="lista-frequencia"><li>Carregando...</li></ul></div>
+            <div class="secao-gaveta"><h4>Diário de Bordo</h4><textarea id="texto-novo-diario" style="width: 100%; border-radius: 6px; border: 1px solid #ccc; padding: 8px; min-height: 60px; font-size: 12px; margin-bottom: 5px;"></textarea><button class="btn-acao-gaveta" id="btn-salvar-diario" style="width: 100%; margin-bottom: 15px;">Guardar Anotação</button><div id="feed-diario" style="max-height: 150px; overflow-y: auto; padding-right: 5px;"></div></div>
+            <div class="secao-gaveta"><h4>Minhas Tarefas Concluídas</h4><ul class="lista-pequena" id="minhas-tarefas-concluidas"><li>Nenhuma tarefa concluída.</li></ul></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-nova-tarefa">
+        <div class="modal-content"><h3 style="color: var(--ppeb-azul-escuro); margin-bottom: 15px;">Criar Nova Demanda</h3><div class="form-group"><label>Título</label><input type="text" id="titulo-tarefa"></div><div class="form-group"><label>Descrição</label><textarea id="desc-tarefa"></textarea></div><div style="display: flex; gap: 15px;"><div class="form-group" style="flex: 1;"><label>Prazo</label><input type="date" id="prazo-tarefa"></div><div class="form-group" style="flex: 1;"><label>Prioridade</label><select id="urgencia-tarefa"><option value="normal">Normal</option><option value="urgente">Urgente</option></select></div></div><div class="modal-actions"><button class="btn-cancelar" id="btn-fechar-modal">Cancelar</button><button class="btn-salvar" id="btn-salvar-tarefa">Salvar no Quadro</button></div></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-iframe">
+        <div class="modal-iframe-content"><div class="modal-iframe-header"><h3 id="iframe-title">Visualizador</h3><button id="btn-fechar-iframe" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #666;">&times;</button></div><p id="iframe-aviso" style="display:none; font-size: 12px; color: #888; text-align: center; margin-bottom: 10px;">Se a página não carregar, <a id="iframe-link-externo" href="#" target="_blank" style="color: var(--ppeb-azul);">Clique aqui para abrir em nova guia</a>.</p><iframe id="iframe-viewer" src=""></iframe></div>
+    </div>
+
+    <footer class="footer-creditos">
+        <p>Hub Acadêmico PPEB © 2026 - Ecossistema integrado de gestão e pesquisa.</p>
+        <p style="margin-top: 5px;">Idealizado e Desenvolvido por <b>João Vitor Ribeiro</b></p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, doc, updateDoc, getDoc, setDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbvGRBaxpLJK8h4yTbFzBv9ppm-85Qexs",
+            authDomain: "hub-ppeb.firebaseapp.com",
+            projectId: "hub-ppeb",
+            storageBucket: "hub-ppeb.firebasestorage.app",
+            messagingSenderId: "185163249575",
+            appId: "1:185163249575:web:d67b6f2acfa2b5fba16882"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let usuarioAtual = null;
+        let nomeParaSistema = ""; 
+        const emailCoordenacao = "vitoribeiro15.vr@gmail.com"; 
+
+        // Gaveta e IFRAME listeners
+        document.getElementById('nome-usuario-header').addEventListener('click', () => { document.getElementById('gaveta-perfil').classList.add('aberta'); document.getElementById('main-container').classList.add('empurrado'); });
+        document.getElementById('btn-fechar-gaveta').addEventListener('click', () => { document.getElementById('gaveta-perfil').classList.remove('aberta'); document.getElementById('main-container').classList.remove('empurrado'); });
+        if (document.querySelector('.btn-sair')) { document.querySelector('.btn-sair').addEventListener('click', () => { signOut(auth); }); }
+        window.abrirLinkInterno = function(url, titulo) { document.getElementById('iframe-title').innerText = titulo; document.getElementById('iframe-viewer').src = url; document.getElementById('iframe-link-externo').href = url; document.getElementById('iframe-aviso').style.display = 'block'; document.getElementById('modal-iframe').style.display = 'flex'; };
+        document.getElementById('btn-fechar-iframe').addEventListener('click', () => { document.getElementById('modal-iframe').style.display = 'none'; document.getElementById('iframe-viewer').src = ""; });
+
+        // ==========================================
+        // 1. CARREGAR DADOS GERAIS
+        // ==========================================
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                usuarioAtual = user;
+                document.getElementById('gaveta-email-display').innerText = user.email;
+                nomeParaSistema = user.email.split('@')[0]; 
+                
+                if (user.email === emailCoordenacao) { document.getElementById('btn-abrir-modal').style.display = 'block'; }
+
+                const docSnap = await getDoc(doc(db, "usuarios", user.uid));
+                if (docSnap.exists()) {
+                    const dados = docSnap.data();
+                    if (dados.fotoUrl) { document.getElementById('gaveta-imagem').src = dados.fotoUrl; document.getElementById('input-link-foto').value = dados.fotoUrl; }
+                    if (dados.nomeReal) { nomeParaSistema = dados.nomeReal; document.getElementById('input-nome-real').value = dados.nomeReal; }
+                    
+                    const areaBotoesLinks = document.getElementById('area-botoes-links'); areaBotoesLinks.innerHTML = '';
+                    if (dados.lattesUrl) { document.getElementById('input-link-lattes').value = dados.lattesUrl; areaBotoesLinks.innerHTML += `<button class="btn-acao-gaveta" onclick="abrirLinkInterno('${dados.lattesUrl}', 'Currículo Lattes')">Ver Lattes</button>`; }
+                    if (dados.orcidUrl) { document.getElementById('input-link-orcid').value = dados.orcidUrl; areaBotoesLinks.innerHTML += `<button class="btn-acao-gaveta" onclick="abrirLinkInterno('${dados.orcidUrl}', 'Perfil ORCID')">Ver ORCID</button>`; }
+                }
+                document.getElementById('nome-usuario-header').innerText = nomeParaSistema; document.getElementById('gaveta-nome-display').innerText = nomeParaSistema;
+
+                onSnapshot(query(collection(db, "usuarios", user.uid, "frequencia"), orderBy("timestamp", "desc")), (snap) => { const listaFreq = document.getElementById('lista-frequencia'); listaFreq.innerHTML = ''; if(snap.empty) listaFreq.innerHTML = '<li>Nenhum plantão registrado.</li>'; snap.forEach(d => { listaFreq.innerHTML += `<li><span>✅ Plantão: <b>${d.data().dataString}</b></span><button class="btn-excluir-item" onclick="excluirPlantao('${d.id}')">×</button></li>`; }); });
+                onSnapshot(query(collection(db, "usuarios", user.uid, "diario"), orderBy("timestamp", "desc")), (snap) => { const feedDiario = document.getElementById('feed-diario'); feedDiario.innerHTML = ''; if(snap.empty) feedDiario.innerHTML = '<p style="font-size:11px; color:#888;">Sem anotações.</p>'; snap.forEach(d => { const nota = d.data(); feedDiario.innerHTML += `<div class="caixa-diario"><div class="botoes-acao"><button class="btn-editar" onclick="editarNota('${d.id}', '${nota.texto.replace(/'/g, "\\'")}')">Editar</button><button class="btn-excluir" onclick="excluirNota('${d.id}')">Excluir</button></div><p>${nota.texto}</p><span class="data">${nota.dataString}</span></div>`; }); });
+            } else { window.location.href = "index.html"; }
+        });
+
+        window.excluirPlantao = async function(idPlantao) { if(confirm("Apagar registro?")) await deleteDoc(doc(db, "usuarios", usuarioAtual.uid, "frequencia", idPlantao)); };
+        window.excluirNota = async function(idNota) { if(confirm("Apagar anotação?")) await deleteDoc(doc(db, "usuarios", usuarioAtual.uid, "diario", idNota)); };
+        window.editarNota = async function(idNota, textoAtual) { const novoTexto = prompt("Edite:", textoAtual); if (novoTexto && novoTexto !== textoAtual) await updateDoc(doc(db, "usuarios", usuarioAtual.uid, "diario", idNota), { texto: novoTexto }); };
+        window.excluirTarefa = async function(idTarefa) { if(confirm("Excluir demanda?")) await deleteDoc(doc(db, "demandas", idTarefa)); };
+        window.excluirEventoAgenda = async function(idEvento) { if(confirm("Apagar evento da agenda oficial?")) await deleteDoc(doc(db, "eventos", idEvento)); };
+
+        document.getElementById('btn-salvar-perfil').addEventListener('click', async () => { const nomeDigitado = document.getElementById('input-nome-real').value; const linkDigitado = document.getElementById('input-link-foto').value; const lattesDigitado = document.getElementById('input-link-lattes').value; const orcidDigitado = document.getElementById('input-link-orcid').value; await setDoc(doc(db, "usuarios", usuarioAtual.uid), { nomeReal: nomeDigitado, fotoUrl: linkDigitado, lattesUrl: lattesDigitado, orcidUrl: orcidDigitado, email: usuarioAtual.email }, { merge: true }); alert("Perfil salvo! Recarregando..."); window.location.reload(); });
+        document.getElementById('btn-registrar-plantao').addEventListener('click', async () => { await addDoc(collection(db, "usuarios", usuarioAtual.uid, "frequencia"), { dataString: new Date().toLocaleDateString('pt-BR'), timestamp: serverTimestamp() }); });
+        document.getElementById('btn-salvar-diario').addEventListener('click', async () => { const texto = document.getElementById('texto-novo-diario').value; if(!texto) return; await addDoc(collection(db, "usuarios", usuarioAtual.uid, "diario"), { texto: texto, dataString: new Date().toLocaleDateString('pt-BR'), timestamp: serverTimestamp() }); document.getElementById('texto-novo-diario').value = ""; });
+
+        // ==========================================
+        // 2. A INTELIGÊNCIA DO CALENDÁRIO MELHORADO
+        // ==========================================
+        let dataCalendario = new Date(); 
+        const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        let eventosSalvos = {}; 
+
+        function getCorHex(nomeCor) {
+            if(nomeCor === "vermelho") return "#dc3545";
+            if(nomeCor === "verde") return "#28a745";
+            if(nomeCor === "laranja") return "#f57017";
+            if(nomeCor === "roxo") return "#6f42c1"; 
+            return "#2d3194"; 
+        }
+
+        onSnapshot(collection(db, "eventos"), (snap) => {
+            eventosSalvos = {}; 
+            snap.forEach(doc => {
+                const ev = doc.data(); ev.id = doc.id;
+                if(!eventosSalvos[ev.data]) eventosSalvos[ev.data] = [];
+                eventosSalvos[ev.data].push(ev);
+            });
+            renderizarCalendario(); 
+        });
+
+        function renderizarCalendario() {
+            const ano = dataCalendario.getFullYear();
+            const mes = dataCalendario.getMonth(); 
+            document.getElementById('mes-ano-display').innerText = `${nomesMeses[mes]} ${ano}`;
+            
+            const grid = document.getElementById('calendario-dias');
+            grid.innerHTML = `<div class="dia-semana">Dom</div><div class="dia-semana">Seg</div><div class="dia-semana">Ter</div><div class="dia-semana">Qua</div><div class="dia-semana">Qui</div><div class="dia-semana">Sex</div><div class="dia-semana">Sáb</div>`;
+
+            const primeiroDiaMes = new Date(ano, mes, 1).getDay();
+            const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+
+            for (let i = 0; i < primeiroDiaMes; i++) { grid.innerHTML += `<div class="dia-celula vazio"></div>`; }
+
+            const hoje = new Date();
+            let eventosDesteMes = [];
+
+            for (let i = 1; i <= diasNoMes; i++) {
+                const mesFormatado = String(mes + 1).padStart(2, '0');
+                const diaFormatado = String(i).padStart(2, '0');
+                const dataString = `${ano}-${mesFormatado}-${diaFormatado}`;
+                
+                let classeHoje = (i === hoje.getDate() && mes === hoje.getMonth() && ano === hoje.getFullYear()) ? "hoje" : "";
+                
+                let bolinhasHTML = "";
+                if (eventosSalvos[dataString]) {
+                    eventosSalvos[dataString].forEach(ev => {
+                        bolinhasHTML += `<span class="evento-dot" style="background:${getCorHex(ev.cor)};"></span>`;
+                        eventosDesteMes.push({ dia: diaFormatado, titulo: ev.titulo, corHex: getCorHex(ev.cor) });
+                    });
+                }
+
+                grid.innerHTML += `<div class="dia-celula ${classeHoje}" onclick="abrirModalDia('${dataString}', '${i} de ${nomesMeses[mes]}')"><span class="dia-numero">${i}</span><div class="eventos-container">${bolinhasHTML}</div></div>`;
+            }
+
+            const listaResumo = document.getElementById('lista-resumo-eventos');
+            listaResumo.innerHTML = "";
+            
+            if (eventosDesteMes.length === 0) {
+                listaResumo.innerHTML = `<li style="color:#888; font-size:13px; grid-column: 1 / -1;">Mês sem marcações.</li>`;
+            } else {
+                eventosDesteMes.sort((a, b) => parseInt(a.dia) - parseInt(b.dia));
+                eventosDesteMes.forEach(ev => {
+                    listaResumo.innerHTML += `<li class="item-resumo"><span class="evento-dot" style="background:${ev.corHex}; width:12px; height:12px;"></span><span class="data-badge">${ev.dia}/${String(mes + 1).padStart(2, '0')}</span>${ev.titulo}</li>`;
+                });
+            }
+        }
+
+        document.getElementById('btn-mes-ant').addEventListener('click', () => { dataCalendario.setMonth(dataCalendario.getMonth() - 1); renderizarCalendario(); });
+        document.getElementById('btn-mes-prox').addEventListener('click', () => { dataCalendario.setMonth(dataCalendario.getMonth() + 1); renderizarCalendario(); });
+
+        window.abrirModalDia = function(dataFormatada, dataBonita) {
+            document.getElementById('titulo-dia-modal').innerText = `Agenda: ${dataBonita}`;
+            document.getElementById('data-evento-oculta').value = dataFormatada;
+            
+            const lista = document.getElementById('lista-eventos-modal');
+            lista.innerHTML = "";
+
+            if (eventosSalvos[dataFormatada]) {
+                eventosSalvos[dataFormatada].forEach(ev => {
+                    // REGRA DE SEGURANÇA: Só a coordenação ou o criador do evento podem apagar
+                    let btnExcluir = "";
+                    if (usuarioAtual.email === emailCoordenacao || ev.criadorId === usuarioAtual.uid) {
+                        btnExcluir = `<button class="btn-excluir-item" onclick="excluirEventoAgenda('${ev.id}')" title="Apagar Evento">🗑️ Remover</button>`;
+                    }
+                    lista.innerHTML += `<li class="cor-${ev.cor}"><span><b>${ev.titulo}</b> <br><small style="color:#888;">Por: ${ev.criadoPor}</small></span> ${btnExcluir}</li>`;
+                });
+            } else {
+                lista.innerHTML = `<li style="border:none; justify-content:center; color:#888;">Nenhuma marcação para este dia.</li>`;
+            }
+            
+            document.getElementById('modal-evento').style.display = 'flex';
+        };
+
+        document.getElementById('btn-fechar-modal-evento').addEventListener('click', () => { document.getElementById('modal-evento').style.display = 'none'; });
+
+        document.getElementById('btn-salvar-evento').addEventListener('click', async () => {
+            const titulo = document.getElementById('titulo-evento').value;
+            const dataOculta = document.getElementById('data-evento-oculta').value;
+            const cor = document.getElementById('cor-evento').value;
+
+            if(!titulo) return alert("Preencha o título do evento.");
+            
+            // Agora salva também o ID de quem criou (criadorId) para controle de exclusão
+            await addDoc(collection(db, "eventos"), { 
+                titulo: titulo, 
+                data: dataOculta, 
+                cor: cor, 
+                criadoPor: nomeParaSistema, 
+                criadorId: usuarioAtual.uid,
+                timestamp: serverTimestamp() 
+            });
+
+            document.getElementById('titulo-evento').value = "";
+            document.getElementById('modal-evento').style.display = 'none';
+        });
+
+        // ==========================================
+        // 3. GERAÇÃO DE RELATÓRIO PDF
+        // ==========================================
+        document.getElementById('btn-exportar-relatorio').addEventListener('click', async () => {
+            const btn = document.getElementById('btn-exportar-relatorio'); btn.innerText = "⏳ Gerando PDF..."; btn.disabled = true;
+            try {
+                const isCoordenacao = (usuarioAtual.email === emailCoordenacao);
+                let listaUsuarios = [];
+                if (isCoordenacao) { const usersSnap = await getDocs(collection(db, "usuarios")); usersSnap.forEach(doc => { if(doc.data().email !== emailCoordenacao) listaUsuarios.push({id: doc.id, ...doc.data()}); }); } 
+                else { const userSnap = await getDoc(doc(db, "usuarios", usuarioAtual.uid)); listaUsuarios.push({id: usuarioAtual.uid, ...userSnap.data()}); }
+
+                const allDemandasSnap = await getDocs(collection(db, "demandas"));
+                const concluidasGlobais = allDemandasSnap.docs.map(d => d.data()).filter(d => d.status === "Concluídas");
+
+                let relatorioHTML = `<html><head><title>Relatório PPEB</title><style>body { font-family: 'Segoe UI', Arial, sans-serif; margin: 40px; color: #333; } .cabecalho { text-align: center; border-bottom: 2px solid #1c1f6b; padding-bottom: 15px; margin-bottom: 30px; } .cabecalho h1 { color: #1c1f6b; font-size: 22px; text-transform: uppercase; margin: 0 0 5px 0; } .cabecalho h2 { color: #555; font-size: 16px; margin: 0 0 10px 0; font-weight: normal; } .cabecalho h3 { color: #f57017; font-size: 18px; margin: 0; } .data-geracao { text-align: right; font-size: 12px; color: #888; margin-bottom: 30px; } .bolsista-section { margin-bottom: 50px; page-break-inside: avoid; } .bolsista-nome { color: #1c1f6b; font-size: 18px; background: #f4f7f6; padding: 8px 12px; border-left: 4px solid #f57017; margin-bottom: 15px; } table { width: 100%; border-collapse: collapse; margin-bottom: 20px; } th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; } th { background-color: #f9f9f9; color: #333; } .tarefas-box { border: 1px solid #eee; padding: 15px; border-radius: 8px; background: #fafafa; } .tarefas-box ul { margin: 0; padding-left: 20px; font-size: 13px; color: #444; } .assinaturas { display: flex; justify-content: space-around; margin-top: 60px; text-align: center; page-break-inside: avoid; } .assinatura-bloco { width: 45%; } .assinatura-bloco p { margin: 5px 0; font-size: 14px; }</style></head><body><div class="cabecalho"><h1>Universidade Federal do Pará - UFPA</h1><h2>Programa de Pós-graduação em Currículo e Gestão da Escola Básica (PPEB)</h2><h3>Relatório Oficial de Atividades e Frequência</h3></div><div class="data-geracao">Documento emitido em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</div>`;
+
+                for (const user of listaUsuarios) {
+                    const nome = user.nomeReal || user.email.split('@')[0];
+                    const freqSnap = await getDocs(query(collection(db, "usuarios", user.id, "frequencia"), orderBy("timestamp", "asc")));
+                    const tarefasDoUser = concluidasGlobais.filter(t => t.responsavelId === user.id);
+                    relatorioHTML += `<div class="bolsista-section"><div class="bolsista-nome">Bolsista: <b>${nome}</b> (${user.email})</div>`;
+                    if (freqSnap.empty) { relatorioHTML += `<p style="font-size: 13px; color: #666; font-style: italic;">Nenhum plantão registrado.</p>`; } 
+                    else { relatorioHTML += `<table><thead><tr><th style="width: 50px; text-align: center;">Nº</th><th>Data do Plantão</th><th>Status</th></tr></thead><tbody>`; let cont = 1; freqSnap.forEach(fDoc => { relatorioHTML += `<tr><td style="text-align: center;">${cont}</td><td>${fDoc.data().dataString}</td><td style="color: #28a745; font-weight: bold;">Presente</td></tr>`; cont++; }); relatorioHTML += `</tbody></table>`; }
+                    relatorioHTML += `<h4 style="margin: 0 0 10px 0; color: #1c1f6b; font-size: 15px;">Atividades Realizadas:</h4><div class="tarefas-box">`;
+                    if (tarefasDoUser.length === 0) { relatorioHTML += `<p style="margin: 0; font-style: italic; font-size: 13px;">Nenhuma atividade concluída neste período.</p>`; } 
+                    else { relatorioHTML += `<ul>`; tarefasDoUser.forEach(t => { let dataC = t.prazo ? t.prazo.split('-').reverse().join('/') : "Sem data"; relatorioHTML += `<li><b>${t.titulo}</b> <span style="color: #888;">(Ref: ${dataC})</span></li>`; }); relatorioHTML += `</ul>`; }
+                    relatorioHTML += `</div></div>`;
+                }
+
+                if (isCoordenacao) { relatorioHTML += `<div class="assinaturas"><div class="assinatura-bloco" style="width: 100%;"><p>___________________________________________________</p><p><b>Coordenação do PPEB</b><br>Universidade Federal do Pará</p></div></div>`; } 
+                else { relatorioHTML += `<div class="assinaturas"><div class="assinatura-bloco"><p>_____________________________________</p><p><b>${nomeParaSistema}</b><br>Bolsista</p></div><div class="assinatura-bloco"><p>_____________________________________</p><p><b>Coordenação do PPEB</b><br>UFPA</p></div></div>`; }
+                relatorioHTML += `</body></html>`;
+                const novaAba = window.open('', '_blank'); novaAba.document.write(relatorioHTML); novaAba.document.close(); setTimeout(() => { novaAba.print(); }, 500);
+            } catch (error) { console.error(error); alert("Erro ao gerar PDF."); } finally { btn.innerText = "📄 Gerar Relatório (PDF)"; btn.disabled = false; }
+        });
+
+        // ==========================================
+        // 4. KANBAN 
+        // ==========================================
+        const modalTarefa = document.getElementById('modal-nova-tarefa');
+        document.getElementById('btn-abrir-modal').addEventListener('click', () => { modalTarefa.style.display = 'flex'; });
+        document.getElementById('btn-fechar-modal').addEventListener('click', () => { modalTarefa.style.display = 'none'; });
+
+        document.getElementById('btn-salvar-tarefa').addEventListener('click', async () => {
+            const titulo = document.getElementById('titulo-tarefa').value; if (!titulo) return;
+            await addDoc(collection(db, "demandas"), { titulo: titulo, descricao: document.getElementById('desc-tarefa').value, prazo: document.getElementById('prazo-tarefa').value, urgencia: document.getElementById('urgencia-tarefa').value, status: "A Fazer", criadoPor: nomeParaSistema, responsavel: "", responsavelId: "", dataCriacao: serverTimestamp() });
+            modalTarefa.style.display = 'none';
+        });
+
+        onSnapshot(query(collection(db, "demandas"), orderBy("dataCriacao", "desc")), (snapshot) => {
+            const listaFazer = document.getElementById('lista-fazer'); const listaAndamento = document.getElementById('lista-andamento'); const listaConcluido = document.getElementById('lista-concluido'); const listaMinhas = document.getElementById('minhas-tarefas-concluidas'); 
+            listaFazer.innerHTML = ''; listaAndamento.innerHTML = ''; listaConcluido.innerHTML = ''; listaMinhas.innerHTML = ''; let qF = 0, qA = 0, qC = 0, qMinhas = 0;
+            snapshot.forEach((doc) => {
+                const tarefa = doc.data(); const id = doc.id; let dataForm = tarefa.prazo ? `Prazo: ${tarefa.prazo.split('-').reverse().join('/')}` : "Sem prazo"; let seloResp = ""; let classBloqueio = "";
+                if (tarefa.responsavelId) { seloResp = `<div class="tarefa-responsavel">👤 Resp: ${tarefa.responsavel}</div>`; if(tarefa.responsavelId !== usuarioAtual.uid) classBloqueio = "bloqueada"; } else { seloResp = `<div class="tarefa-responsavel aberto">👤 Aberto (Pegue para você!)</div>`; }
+                let htmlLixeira = (usuarioAtual.email === emailCoordenacao) ? `<button class="btn-excluir-tarefa" onclick="excluirTarefa('${id}')">🗑️</button>` : "";
+                const cardHTML = `<div class="tarefa-card ${tarefa.urgencia === 'urgente' ? 'urgente' : ''} ${classBloqueio}" draggable="true" data-id="${id}" data-resp-id="${tarefa.responsavelId || ''}">${htmlLixeira}${seloResp}<h5>${tarefa.titulo}</h5><p>${tarefa.descricao}</p><div class="tarefa-meta"><span>${dataForm}</span><span>Por: ${tarefa.criadoPor}</span></div></div>`;
+                if (tarefa.status === "A Fazer") { listaFazer.innerHTML += cardHTML; qF++; } else if (tarefa.status === "Em Andamento") { listaAndamento.innerHTML += cardHTML; qA++; } else if (tarefa.status === "Concluídas") { listaConcluido.innerHTML += cardHTML; qC++; if(tarefa.responsavelId === usuarioAtual.uid) { listaMinhas.innerHTML += `<li>✅ <b>${tarefa.titulo}</b> <span style="font-size:10px; color:#888;">(${dataForm})</span></li>`; qMinhas++; } }
+            });
+            if(qMinhas === 0) listaMinhas.innerHTML = '<li>Nenhuma tarefa concluída ainda.</li>';
+            document.getElementById('cont-fazer').innerText = qF; document.getElementById('cont-andamento').innerText = qA; document.getElementById('cont-concluido').innerText = qC;
+        });
+
+        let idArrastado = null;
+        document.addEventListener('dragstart', (e) => { const card = e.target.closest('.tarefa-card'); if (card) { const donoDoCard = card.getAttribute('data-resp-id'); if(donoDoCard && donoDoCard !== usuarioAtual.uid) { e.preventDefault(); alert("⚠️ Esta demanda já foi assumida por outro bolsista."); return; } idArrastado = card.getAttribute('data-id'); card.style.opacity = '0.5'; } });
+        document.addEventListener('dragend', (e) => { const card = e.target.closest('.tarefa-card'); if (card) card.style.opacity = '1'; });
+        document.querySelectorAll('.kanban-column').forEach(coluna => { coluna.addEventListener('dragover', (e) => { e.preventDefault(); coluna.classList.add('coluna-drag-hover'); }); coluna.addEventListener('dragleave', () => { coluna.classList.remove('coluna-drag-hover'); }); coluna.addEventListener('drop', async (e) => { e.preventDefault(); coluna.classList.remove('coluna-drag-hover'); if (idArrastado) { let novoStatus = coluna.id === "coluna-fazer" ? "A Fazer" : coluna.id === "coluna-andamento" ? "Em Andamento" : coluna.id === "coluna-concluido" ? "Concluídas" : ""; if (novoStatus) { try { let updates = { status: novoStatus }; if (novoStatus === "Em Andamento" || novoStatus === "Concluídas") { updates.responsavel = nomeParaSistema; updates.responsavelId = usuarioAtual.uid; } else if (novoStatus === "A Fazer") { updates.responsavel = ""; updates.responsavelId = ""; } await updateDoc(doc(db, "demandas", idArrastado), updates); } catch (err) { console.error(err); } } idArrastado = null; } }); });
+    </script>
+</body>
+</html>
